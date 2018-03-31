@@ -1,1 +1,20 @@
-mysql -u USERNAME -p PASSWORD -h HOSTNAMEORIP DATABASENAME 
+>>> import MySQLdb
+  2 db = MySQLdb.connect("localhost","kivanc","bananas","dbname")
+  3 cur = db.cursor()
+  4 cur.execute('SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TY
+    PE = "BASE TABLE" AND TABLE_SCHEMA="dbname"')
+  5 cur.execute('SELECT * FROM example')
+  6 cur.fetchall()
+
+>>> .                                                                           
+>>> cur.fetchall()
+()
+
+>>> cur.execute('SELECT * FROM example')
+1L
+
+>>> .                                                                           
+>>> cur.fetchall()
+((1, 'Sample data'),)
+
+
