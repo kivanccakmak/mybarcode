@@ -75,7 +75,7 @@ def get_config(cfile, sections):
     to serve UI, relative paths of raw/processed data,
     server configuration.
     :cfile: Str[]
-    :sections: Str[]
+    :sections: Str[] or Str
     :return: dict
         configuration
     """
@@ -87,8 +87,12 @@ def get_config(cfile, sections):
         print('Could not parse:', err)
         return None
 
-    for elem in sections:
-        for name, value in parser.items(elem):
+    if type(sections) is list:
+        for elem in sections:
+            for name, value in parser.items(elem):
+                config[name] = value
+    elif type(sections) is str:
+        for name, value in parser.items(sections):
             config[name] = value
 
     return config
@@ -101,8 +105,14 @@ def main():
     config = get_config("config.ini", ["server"])
     NODES = get_config("config.ini", ["nodes"])
 
-    CONN = pymssql.connect(host='10.0.0.2', user='kivanc',
-            password='selen30031994', database='LKSDB', timeout=10)
+    print("connecting")
+    try:
+        CONN = pymssql.connect(host='1.2.1.2', user='kivanc',
+                password='ahmetmehmet', database='LKSDB', 
+                login_timeout=5, timeout=10)
+    except pymssql.OperationalError, err:
+        print('failed to connect:', err)
+        sys.exit(1)
     CURSOR=CONN.cursor()
 
     APP.run(
