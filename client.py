@@ -17,12 +17,15 @@ scancodes = {
     50: u'M', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
-barCodeDeviceString = "NewLand Auto-ID HR200 USB HID Keyboard"
+barCodeDeviceString = "Newland Auto-ID NLS IOTC PRDs HID KBW"
 
+dev = None
 devices = map(InputDevice, list_devices())
 
 for device in devices:
-    if device.name == barCodeDeviceString:
+    print(device.name)
+    if barCodeDeviceString == device.name:
+        print("here")
         dev = InputDevice(device.fn)
 
 def signal_handler(signal, frame):
@@ -32,6 +35,7 @@ def signal_handler(signal, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
+print(dev)
 dev.grab()
 
 barcode = ""
