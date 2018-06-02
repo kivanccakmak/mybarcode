@@ -54,7 +54,7 @@ def record_status(barcode, config, cursor):
     print(cmd)
     cursor.execute(cmd)
 
-def task_loop(dev, cursor, config):
+def task_loop(dev, cursor, conn, config):
     """reads barcode and updates sql database
     :dev: InputDevice
     :cursor: sql connection token
@@ -70,6 +70,7 @@ def task_loop(dev, cursor, config):
                 if data.scancode == 28:
                     barcode = barcode.replace("=", "-")
                     record_status(barcode, config, cursor)
+                    conn.commit()
                     print(barcode)
                     barcode = ""
                 else:
@@ -139,7 +140,7 @@ def main():
         sys.exit(2)
     cursor = conn.cursor()
 
-    task_loop(dev, cursor, config)
+    task_loop(dev, cursor, conn, config)
 
 if __name__ == "__main__":
     main()
