@@ -5,6 +5,7 @@ w.r.t barcode device interrupts.
 """
 
 from evdev import InputDevice, ecodes, list_devices, categorize
+import os
 import signal, sys
 import pymssql
 import ConfigParser
@@ -115,6 +116,17 @@ def db_connect(host, user, password,
         return None
     return conn
 
+def conn_check(ip_addr):
+    """
+    :ip_addr: String
+    """
+    while True:
+        response = os.system('ping -c 1 {}'.format(ip_addr))
+        if response == 0:
+            return
+        print('no connection, re-try')
+        time.sleep(1)
+
 def main():
     """main block
     get barcode scanner device
@@ -125,6 +137,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     config = get_config(Constants.config_file(),
             Constants.config_sections())
+    conn_check(config['host'])
 
     dev = get_device(config['dev_name'])
     if not dev:
