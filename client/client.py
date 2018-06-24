@@ -9,10 +9,27 @@ import os
 import signal, sys
 import pymssql
 import ConfigParser
+import logging
 from constants import Constants
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# create a file handler
+handler = logging.FileHandler(os.path.abspath('client.log'))
+handler.setLevel(logging.INFO)
+
+# create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# add the handlers to the logger
+logger.addHandler(handler)
+
+logger.info('Starting')
+
 def signal_handler(signal, frame):
-    print('Stopping')
+    logger.warn('Stopping')
     dev.ungrab()
     sys.exit(0)
 
@@ -31,7 +48,7 @@ def get_config(cfile, sections):
         parser = ConfigParser.SafeConfigParser()
         parser.read(cfile)
     except ConfigParser.ParsingError, err:
-        print('Could not parse:', err)
+        logger.error('Could not parse:', err)
         return None
 
     if type(sections) is list:
@@ -52,7 +69,7 @@ def record_status(barcode, config, cursor):
     """
     cmd = config['cmd'].format(
             config['status'], barcode)
-    print(cmd)
+    logger.info(cmd)
     cursor.execute(cmd)
 
 def task_loop(dev, cursor, conn, config):
@@ -72,7 +89,7 @@ def task_loop(dev, cursor, conn, config):
                     barcode = barcode.replace("=", "-")
                     record_status(barcode, config, cursor)
                     conn.commit()
-                    print(barcode)
+                    logger.info(barcode)
                     barcode = ""
                 else:
                     barcode += scancodes[data.scancode]
@@ -87,9 +104,9 @@ def get_device(dev_name):
     devices = map(InputDevice, list_devices())
 
     for device in devices:
-        print(device.name)
+        logger.info(device.name)
         if dev_name in device.name:
-            print('found device')
+            logger.info('found device')
             return InputDevice(device.fn)
     return dev
 
@@ -104,7 +121,7 @@ def db_connect(host, user, password,
     :login_timeout: int
     :return: connection token
     """
-    print("trying to connect, timeout: {}".format(login_timeout))
+    logger.info("trying to connect, timeout: {}".format(login_timeout))
     try:
         conn = pymssql.connect(host=host,
                 user=user, password=password,
@@ -112,9 +129,9 @@ def db_connect(host, user, password,
                 timeout=query_timeout,
                 login_timeout=login_timeout)
     except pymssql.OperationalError, err:
-        print('failed to connect:', err)
+        logger.error('failed to connect:', err)
         return None
-    print('connected')
+    logger.info('connected')
     return conn
 
 def conn_check(ip_addr):
@@ -125,7 +142,7 @@ def conn_check(ip_addr):
         response = os.system('ping -c 1 {}'.format(ip_addr))
         if response == 0:
             return
-        print('no connection, re-try')
+        logger.warn('no connection, re-try')
         time.sleep(1)
 
 def main():
@@ -143,7 +160,7 @@ def main():
 
     dev = get_device(config['dev_name'])
     if not dev:
-        print("failed to find {}".format(config['dev_name']))
+        logger.error("failed to find {}".format(config['dev_name']))
         sys.exit(1)
     dev.grab()
 
@@ -151,11 +168,11 @@ def main():
             config['password'], config['database'],
             config['query_timeout'], config['login_timeout'])
     if conn == None:
-        print("failed to connect to db")
+        logger.info("failed to connect to db")
         sys.exit(2)
     cursor = conn.cursor()
 
-    print('entering task loop')
+    logger.info('entering task loop')
     task_loop(dev, cursor, conn, config)
 
 if __name__ == "__main__":
