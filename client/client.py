@@ -88,7 +88,7 @@ def get_device(dev_name):
 
     for device in devices:
         print(device.name)
-        if dev_name == device.name:
+        if dev_name in device.name:
             print('found device')
             return InputDevice(device.fn)
     return dev
@@ -104,7 +104,7 @@ def db_connect(host, user, password,
     :login_timeout: int
     :return: connection token
     """
-    print("trying to connect")
+    print("trying to connect, timeout: {}".format(login_timeout))
     try:
         conn = pymssql.connect(host=host,
                 user=user, password=password,
@@ -114,6 +114,7 @@ def db_connect(host, user, password,
     except pymssql.OperationalError, err:
         print('failed to connect:', err)
         return None
+    print('connected')
     return conn
 
 def conn_check(ip_addr):
@@ -135,7 +136,8 @@ def main():
     """
     cursor, dev = None, None
     signal.signal(signal.SIGINT, signal_handler)
-    config = get_config(Constants.config_file(),
+    conf_path = os.path.abspath(Constants.config_file())
+    config = get_config(conf_path,
             Constants.config_sections())
     conn_check(config['host'])
 
@@ -153,6 +155,7 @@ def main():
         sys.exit(2)
     cursor = conn.cursor()
 
+    print('entering task loop')
     task_loop(dev, cursor, conn, config)
 
 if __name__ == "__main__":
