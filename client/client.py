@@ -6,6 +6,8 @@ w.r.t barcode device interrupts.
 
 from evdev import InputDevice, ecodes, list_devices, categorize
 import os
+import ast
+import time
 import signal, sys
 import pymssql
 import ConfigParser
@@ -94,20 +96,22 @@ def task_loop(dev, cursor, conn, config):
                 else:
                     barcode += scancodes[data.scancode]
 
-def get_device(dev_name):
+def get_device(devlist):
     """
-    :dev_name: String
+    :devlist: String[]
     :return: InputDevice
         None in failure
     """
     dev = None
     devices = map(InputDevice, list_devices())
+    logger.info("searching one of {}".format(str(devlist)))
 
     for device in devices:
         logger.info(device.name)
-        if dev_name.lower() in device.name.lower():
-            logger.info('found device')
-            return InputDevice(device.fn)
+        for name in devlist:
+            if name.lower() in device.name.lower():
+                logger.info('found device')
+                return InputDevice(device.fn)
     return dev
 
 def db_connect(host, user, password,
@@ -158,9 +162,10 @@ def main():
             Constants.config_sections())
     conn_check(config['host'])
 
-    dev = get_device(config['dev_name'])
+    devlist = ast.literal_eval(config['devlist'])
+    dev = get_device(devlist)
     if not dev:
-        logger.error("failed to find {}".format(config['dev_name']))
+        logger.error("failed to find {}".format(devlist))
         sys.exit(1)
     dev.grab()
 
