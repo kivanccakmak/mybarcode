@@ -105,7 +105,7 @@ def get_device(dev_name):
 
     for device in devices:
         logger.info(device.name)
-        if dev_name in device.name:
+        if dev_name.lower() in device.name.lower():
             logger.info('found device')
             return InputDevice(device.fn)
     return dev
