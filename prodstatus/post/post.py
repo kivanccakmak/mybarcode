@@ -28,10 +28,13 @@ def main(url, path):
         print("failed to load {}".format(path))
         sys.exit(1)
 
-    r = requests.post(url, json=data)
+    print("requests.post({}, json={}".format(url, data))
+    r = requests.post(url, json=data,
+            timeout=5, headers={'Connection':'close'})
+    r.close()
     print("status_code: {}".format(r.status_code))
 
-def is_url(url):
+def valid_url(url):
     """
     :url: String
     :return: Bool
@@ -49,13 +52,11 @@ if __name__ == "__main__":
     path = os.path.join(os.path.abspath('.'), sys.argv[1])
     url = sys.argv[2]
 
-    print("looking for {}".format(path))
     if not os.path.isfile(sys.argv[1]):
-        print("{} not found".format(path))
+        print("failed to find file: {}".format(path))
         sys.exit(2)
 
-    print("controlling url: {}".format(url))
-    if not is_url(url):
+    if not valid_url(url):
         print("invalid url: {}".format(url))
         sys.exit(3)
 

@@ -13,6 +13,7 @@ from flask import Flask, jsonify, render_template,\
 import ConfigParser
 import ast
 
+LOCKFILE = "/tmp/recordlock"
 APP = Flask(__name__)
 
 # LOGGING CONFIGURATION
@@ -29,12 +30,21 @@ def supply_data():
     supply packet information with airtimes.
     :return: json
     """
-    print(request.json)
-    return jsonify(result="abc")
+    fd = open(LOCKFILE, "w+")
+    lock(fd)
+    val = request.json
+    with open("data/record.json", "r") as data_file:
+        data = json.load(data_file)
+    print(val)
+    data['records'] += val['records']
+    with open("data/record.json", "w") as outfile:
+        json.dump(data, outfile, indent=4, separators=(",", ":"))
+    unlock(fd)
+    return jsonify(result="success")
 
 @APP.route("/record.html")
 def index():
-    fd = open("/tmp/recordlock", "w")
+    fd = open(LOCKFILE, "w+")
     lock(fd)
     with open("data/record.json", "r") as data_file:
         data = json.load(data_file)
@@ -108,6 +118,11 @@ def unlock(fd):
 
 def main():
     """main func"""
+    try:
+        os.remove(LOCKFILE)
+    except:
+        pass
+
     config = get_config("config.ini", ["server"])
 
     APP.run(
