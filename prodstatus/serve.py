@@ -29,19 +29,21 @@ def supply_data():
     supply packet information with airtimes.
     :return: json
     """
+    print(request.json)
     return jsonify(result="abc")
 
 @APP.route("/record.html")
 def index():
+    fd = open("/tmp/recordlock", "w")
+    lock(fd)
     with open("data/record.json", "r") as data_file:
         data = json.load(data_file)
+    unlock(fd)
     return render_template('record.html', 
             colnames=data['colnames'], 
             records=data['records'])
 
-#   -------------------------------------------------
-
-
+# -------------------------------------------------
 
 def get_interface_ip(ifname):
     """ip address of interface
@@ -79,6 +81,30 @@ def get_config(cfile, sections):
             config[name] = value
 
     return config
+
+def lock(fd):
+    """
+    :fd: int
+    """
+    while True:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            break
+        except IOError as e:
+            # raise on unrelated IOErrors
+            if e.errno != errno.EAGAIN:
+                raise
+            else:
+                time.sleep(0.1)
+
+def unlock(fd):
+    """
+    :fd: int
+    """
+    try:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+    except:
+        print("failed to unlock")
 
 def main():
     """main func"""
