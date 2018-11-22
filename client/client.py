@@ -106,7 +106,7 @@ def task_loop(dev, cursor, conn, config):
                     invalid = False
                     barcode = ""
                 else:
-                    if data.scacode in scancodes.keys():
+                    if data.scancode in scancodes.keys():
                         barcode += scancodes[data.scancode]
                         logger.info("scancode:{} barcode:{}".format(data.scancode, barcode))
                     else:
