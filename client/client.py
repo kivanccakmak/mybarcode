@@ -69,10 +69,17 @@ def record_status(barcode, config, cursor):
     :config: dict
     :cursor: sql connection token
     """
+    msg = None
     cmd = config['cmd'].format(
             config['status'], barcode)
     logger.info(cmd)
-    cursor.execute(cmd)
+    try:
+        cursor.execute(cmd)
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        msg = ''.join('!! ' + line for line in lines)
+        logging.error(msg)
 
 def task_loop(dev, cursor, conn, config):
     """reads barcode and updates sql database
@@ -80,6 +87,7 @@ def task_loop(dev, cursor, conn, config):
     :cursor: sql connection token
     :config: dict
     """
+    invalid = False
     barcode = ""
     scancodes = Constants.scancodes()
     for event in dev.read_loop():
@@ -89,12 +97,21 @@ def task_loop(dev, cursor, conn, config):
             if data.keystate == 1 and data.scancode != 42:
                 if data.scancode == 28:
                     barcode = barcode.replace("=", "-")
-                    record_status(barcode, config, cursor)
-                    conn.commit()
-                    logger.info(barcode)
+                    if not invalid:
+                        logger.info("recording {}".format(barcode))
+                        record_status(barcode, config, cursor)
+                        conn.commit()
+                    else:
+                        logger.error("won't record {} [invalid]".format(barcode))
+                    invalid = False
                     barcode = ""
                 else:
-                    barcode += scancodes[data.scancode]
+                    if data.scacode in scancodes.keys():
+                        barcode += scancodes[data.scancode]
+                        logger.info("scancode:{} barcode:{}".format(data.scancode, barcode))
+                    else:
+                        logger.error("invalid scancode:{}".format(data.scancode))
+                        invalid = True
 
 def get_device(devlist):
     """
