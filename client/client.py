@@ -81,6 +81,8 @@ def query_status(barcode, config, cursor):
         logger.error(msg)
 
     res = cursor.fetchone()
+    logger.info(res)
+
     if res and len(res) == 1:
         return str(res[0])
 

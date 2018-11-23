@@ -1,9 +1,8 @@
 from client import *
 
-def main(barcode, status):
+def main(barcode):
     """
     :barcode: String
-    :status: String
     """
 
     conf_path = os.path.abspath(Constants.config_file())
@@ -12,22 +11,20 @@ def main(barcode, status):
             config['database'], config['query_timeout'], 
             config['login_timeout'])
 
-    config['status'] = status
     cursor = conn.cursor()
-    logger.info('== Starting Test ==')
+    logger.info('== Starting Query Test ==')
     state = query_status(barcode, config, cursor)
     logger.info('query: {} -> {}'.format(barcode, state))
-    record_status(barcode, config, cursor)
-    conn.commit()
-    state = query_status(barcode, config, cursor)
-    logger.info('query: {} -> {}'.format(barcode, state))
-    logger.info('== Test Completed ==')
-
+    print('query: {} -> {}'.format(barcode, state))
+    conn.close()
+    logger.info('== Test Query Completed ==')
 
 if __name__ == "__main__":
-    if len(sys.argv) is not 3:
+    status = None
+    if len(sys.argv) != 2:
         print("invalid usage")
-        print('python test.py barcode status')
-        print('python test.py 1612-1 "Dvm Ediyor"')
+        print('python query.py barcode')
         sys.exit(1)
-    main(str(sys.argv[1]), str(sys.argv[2]))
+
+    barcode = sys.argv[1]
+    main(barcode)
