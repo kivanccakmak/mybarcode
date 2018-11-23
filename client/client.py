@@ -12,6 +12,7 @@ import signal, sys
 import pymssql
 import ConfigParser
 import logging
+import traceback
 from constants import Constants
 
 logger = logging.getLogger(__name__)
@@ -63,6 +64,29 @@ def get_config(cfile, sections):
 
     return config
 
+def query_status(barcode, config, cursor):
+    """
+    :barcode: Str
+    :config: dict
+    :cursor: sql connection token
+    """
+    cmd = config['cmd_query'].format(barcode)
+    logger.info(cmd)
+    try:
+        cursor.execute(cmd)
+    except:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+        msg = ''.join('!! ' + line for line in lines)
+        logger.error(msg)
+
+    res = cursor.fetchone()
+    if res and len(res) == 1:
+        return str(res[0])
+
+    logger.error("no response")
+    return None
+
 def record_status(barcode, config, cursor):
     """
     :barcode: Str
@@ -79,7 +103,7 @@ def record_status(barcode, config, cursor):
         exc_type, exc_value, exc_traceback = sys.exc_info()
         lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
         msg = ''.join('!! ' + line for line in lines)
-        logging.error(msg)
+        logger.error(msg)
 
 def task_loop(dev, cursor, conn, config):
     """reads barcode and updates sql database
